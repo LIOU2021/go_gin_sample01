@@ -11,6 +11,9 @@ func main() {
 	router := gin.Default()
 	router.SetTrustedProxies([]string{"127.0.0.1"})
 
+	//global middleware
+	router.Use(GlobalMiddleware1(), CheckTokenMiddleware())
+
 	router.GET("/DoGetByPath/:param1/*param2", getting)
 
 	router.GET("/DoGetByQueryString", func(c *gin.Context) {
@@ -86,4 +89,28 @@ func middleware2(c *gin.Context) {
 	//c.Abort()停止執行後面的hanlder，可以用來做auth
 	c.Abort()
 	c.JSON(200, gin.H{"msg": "i'm fail..."})
+}
+
+func CheckTokenMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		//取得header的token值
+		token := c.Query("token")
+		if token == "" {
+			//沒有token的話就不執行後面的handler
+			c.Abort()
+			//回傳錯誤值
+			c.JSON(http.StatusOK, map[string]string{"msg": "token empty"})
+		} else {
+			//有token，繼續執行後面的handler
+			fmt.Println("token checked")
+			c.Next()
+		}
+
+	}
+}
+
+func GlobalMiddleware1() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		fmt.Println("test GlobalMiddleware1")
+	}
 }
