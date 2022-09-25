@@ -9,6 +9,7 @@ import (
 
 func main() {
 	router := gin.Default()
+	router.SetTrustedProxies([]string{"127.0.0.1"})
 
 	router.GET("/DoGetByPath/:param1/*param2", getting)
 
@@ -21,7 +22,7 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"param1": p1, "param2": p2})
 	})
 
-	router.Use(middleware1).GET("/", func(c *gin.Context) {
+	router.GET("/", middleware1, func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"data": "hello world"})
 	})
 
@@ -32,9 +33,39 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"data": "v1 getting"})
 	})
 
-	// router.Run(":8787") 指定port
-	router.Run()
+	//By Group設定middleware
+	g2 := router.Group("/v2").Use(middleware2)
+	g2.GET("/getting", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"data": "v2 getting"})
+	})
 
+	router.GET("/api", func(c *gin.Context) {
+		fmt.Println("First Middle Before Next")
+		// c.Next()
+		fmt.Println("First Middle After Next")
+
+	}, func(c *gin.Context) {
+		fmt.Println("Second Middle Before Next")
+		// c.Next()
+		// c.Abort()
+		fmt.Println("Second Middle After Next")
+
+	}, func(c *gin.Context) {
+
+		fmt.Println("Third Middle Before Next")
+		// c.Next()
+		fmt.Println("Third Middle After Next")
+		c.JSON(http.StatusOK, gin.H{
+			"message": "pong",
+		})
+	})
+
+	router.GET("/api/1", func(c *gin.Context) {
+		c.String(200, "ok")
+	})
+
+	// router.Run(":8787") 指定port。預設8080
+	router.Run("127.0.0.1:80") //指定127.0.0.1避免觸發win 防火牆
 }
 
 func getting(c *gin.Context) {
@@ -48,4 +79,11 @@ func middleware1(c *gin.Context) {
 	//c.Next() 執行middleware後面接的function，執行完後再回到middleware繼續執行下去
 	// c.Next()
 	fmt.Println("after exec middleware1")
+}
+
+func middleware2(c *gin.Context) {
+	fmt.Println("exec middleware2")
+	//c.Abort()停止執行後面的hanlder，可以用來做auth
+	c.Abort()
+	c.JSON(200, gin.H{"msg": "i'm fail..."})
 }
