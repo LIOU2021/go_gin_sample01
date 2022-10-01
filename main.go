@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -83,6 +84,7 @@ func main() {
 	g3 := router.Group("/books")
 	g3.GET("/", IndexBooks)
 	g3.POST("/", CreateBooks)
+	g3.GET("/:id", BookById)
 
 	// router.Run(":8787") 指定port。預設8080
 	router.Run("127.0.0.1:80") //指定127.0.0.1避免觸發win 防火牆
@@ -148,4 +150,27 @@ func CreateBooks(c *gin.Context) {
 	books = append(books, newBook)
 
 	c.JSON(http.StatusCreated, books)
+}
+
+func BookById(c *gin.Context) {
+	id := c.Param("id")
+	book, err := ShowBooks(id)
+
+	if err != nil {
+		// c.JSON(http.StatusNotFound, gin.H{"msg": err.Error()})
+		c.String(http.StatusNotFound, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, book)
+}
+
+func ShowBooks(id string) (*book, error) {
+	for i, b := range books {
+		if b.ID == id {
+			return &books[i], nil
+		}
+	}
+
+	return nil, errors.New("book not found")
 }
