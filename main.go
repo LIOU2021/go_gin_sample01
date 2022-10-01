@@ -82,6 +82,7 @@ func main() {
 
 	g3 := router.Group("/books")
 	g3.GET("/", IndexBooks)
+	g3.POST("/", CreateBooks)
 
 	// router.Run(":8787") 指定port。預設8080
 	router.Run("127.0.0.1:80") //指定127.0.0.1避免觸發win 防火牆
@@ -133,4 +134,18 @@ func GlobalMiddleware1() gin.HandlerFunc {
 
 func IndexBooks(c *gin.Context) {
 	c.JSON(http.StatusOK, books)
+}
+
+func CreateBooks(c *gin.Context) {
+	var newBook book
+
+	if error := c.BindJSON(&newBook); error != nil {
+		fmt.Println(error)
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "錯誤請求參數格式"})
+		return
+	}
+
+	books = append(books, newBook)
+
+	c.JSON(http.StatusCreated, books)
 }
