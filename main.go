@@ -7,6 +7,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type book struct {
+	ID     string `json:"id"`
+	Title  string `json:"title"`
+	Author string `json:"author"`
+}
+
+var books = []book{
+	{ID: "1", Title: "title01", Author: "mark01"},
+	{ID: "2", Title: "title02", Author: "mark02"},
+	{ID: "3", Title: "title03", Author: "mark03"},
+	{ID: "4", Title: "title04", Author: "mark04"},
+}
+
 func main() {
 	router := gin.Default()
 	router.SetTrustedProxies([]string{"127.0.0.1"})
@@ -67,6 +80,9 @@ func main() {
 		c.String(200, "ok")
 	})
 
+	g3 := router.Group("/books")
+	g3.GET("/", IndexBooks)
+
 	// router.Run(":8787") 指定port。預設8080
 	router.Run("127.0.0.1:80") //指定127.0.0.1避免觸發win 防火牆
 }
@@ -113,4 +129,8 @@ func GlobalMiddleware1() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		fmt.Println("test GlobalMiddleware1")
 	}
+}
+
+func IndexBooks(c *gin.Context) {
+	c.JSON(http.StatusOK, books)
 }
